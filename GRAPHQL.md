@@ -126,6 +126,8 @@ app.listen(4000, () => {
 });
 ```
 
+_graphiql is only used for development purposes_
+
 6. At this point going to localhost:port#/graphql should pull up a user interface graphiql tool:
 
 -   documentation explorer grows as you add more schema to the server
@@ -139,8 +141,58 @@ app.listen(4000, () => {
 }
 ```
 
+_Occasionally graphiql will bug out and stop working right, rewrite the return field object and it should start working again_
+
 -   line 2 specifies the field object, with the argument to find it by id: "23"
 -   line 3 tells it which fields you want returned from that object
 -   you have to enter some kind of argument in queries or it will not work
 
-7. To use an outside API:
+7. Resolve can also work asynchronously to call to outside servers through HTTP requests:
+
+```javascript
+const RootQuery = new GraphQLObjectType({
+    name: "RootQueryType",
+    fields: {
+        user: {
+            type: UserType,
+            args: { id: { type: GraphQLString } },
+            resolve(parentValue, args) {
+                return axios
+                    .get(`http://localhost:3000/users/${args.id}`)
+                    .then((res) => res.data);
+            },
+        },
+    },
+});
+```
+
+-   A quirk of using axios with graphql is they both return in data objects
+    -   Using them together usually ends with response.data.data
+    -   Best practice is to return resp.data and then go to the next step to eliminate the extra nest
+
+8. To add relationships between two schemas we add it in ourselves as follows:
+
+```javascript
+const UserType = new GraphQLObjectType({
+    name: "User",
+    fields: {
+        id: { type: GraphQLString },
+        firstName: { type: GraphQLString },
+        age: { type: GraphQLInt },
+        company: {
+            type: CompanyType,
+            resolve(parentValue, args) {
+                return axios
+                    .get(
+                        `http://localhost:3000/companies/${parentValue.companyId}`
+                    )
+                    .then((res) => res.data);
+            },
+        },
+    },
+});
+```
+
+-   Resolve is only required on issues that have different names between the data model and the data type trying to be used
+-   ParentValue looks into the value of the parent
+    -   console.log(parentValue) is a good way to see what it is you need to use
