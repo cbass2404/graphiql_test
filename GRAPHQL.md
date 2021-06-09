@@ -387,3 +387,28 @@ mutation{
   }
 }
 ```
+
+## Lokka Apollo vs Relay (GraphQL Clients)
+
+---
+
+-   Lokka
+    -   As simple as possible
+    -   Basic queries, mutations
+    -   Some simple caching
+-   Apollo
+    -   Produced by the same guys as MeteorJS
+    -   Good balance between features and complexity
+    -   Full stack (Frontend and Backend, no express)
+-   Relay
+    -   Amazing performance for mobile
+    -   By far the most complex
+
+## Apollo vs GraphQL Server
+
+---
+
+-   Neither inherently better than the other
+-   GraphQL less likely to get big changes
+-   GraphQL maintained by facebook
+-   GraphQL co-locates all properties with resolve functions, apollo seperates them in different files
