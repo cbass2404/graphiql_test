@@ -135,8 +135,13 @@ _graphiql is only used for development purposes_
 
 ```javascript
 {
-  user(id: "23"){
-    id, firstName, age
+  user(id: "23") {
+    firstName
+    company {
+      id
+      name
+      description
+    }
   }
 }
 ```
@@ -159,6 +164,15 @@ const RootQuery = new GraphQLObjectType({
             resolve(parentValue, args) {
                 return axios
                     .get(`http://localhost:3000/users/${args.id}`)
+                    .then((res) => res.data);
+            },
+        },
+        company: {
+            type: CompanyType,
+            args: { id: { type: GraphQLString } },
+            resolve(parentValue, args) {
+                return axios
+                    .get(`http://localhost:3000/companies/${args.id}`)
                     .then((res) => res.data);
             },
         },
