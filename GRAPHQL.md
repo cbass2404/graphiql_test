@@ -20,9 +20,11 @@ URL         Method      Operation
 /users      POST        Create a new user
 /users      GET         Fetch a list of all users
 /users/23   GET         Fetch details on user with ID 23
-/users/23   PUT         Update details of user with ID 23
+/users/23   PUT/PATCH   Update details of user with ID 23
 /users/23   DELETE      Delete user with ID 23
 ```
+
+_Put overwrites the entire entry, Patch updates specified pieces_
 
 ### Shortcomings of Rest-ful routing:
 
@@ -235,3 +237,153 @@ const CompanyType = new GraphQLObjectType({
 ```
 
 -   wrap the references fields section in an arrow function as above
+
+10. You can name queries to specify their use on the frontend:
+
+```javascript
+query findCompaniesUsers {
+  company(id: "2"){
+    name
+    description
+    users {
+      firstName
+      age
+      company {
+        id
+      }
+    }
+  }
+}
+```
+
+-   Or you can assign nested queries in keys:
+
+```javascript
+{
+  company(id: "2"){
+    name
+    description
+    users {
+      firstName
+      age
+      company {
+        id
+      }
+    }
+  }
+  apple(id: "1"){
+    name
+    description
+    users {
+      firstName
+      age
+      company {
+        id
+      }
+    }
+  }
+}
+```
+
+-   Use query fragments as follows:
+
+```javascript
+{
+  google(id: "2"){
+    ...companyDetails
+  }
+  apple(id: "1"){
+    ...companyDetails
+  }
+}
+
+fragment companyDetails on Company {
+    id
+    name
+    description
+}
+```
+
+_fragment name on type: type checks the fragment to make sure you aren't breaking data structure rules_
+
+11. Using GraphQL to modify data through mutations:
+
+```javascript
+const mutation = new GraphQLObjectType({
+    name: "Mutation",
+    fields: {
+        addUser: {
+            type: UserType,
+            args: {
+                firstName: { type: new GraphQLNonNull(GraphQLString) },
+                age: { type: new GraphQLNonNull(GraphQLInt) },
+                companyId: { type: GraphQLString },
+            },
+            resolve(parentValue, { firstName, age }) {
+                return axios
+                    .post(`http://localhost:3000/users`, { firstName, age })
+                    .then((res) => res.data);
+            },
+        },
+        deleteUser: {
+            type: UserType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLString) },
+            },
+            resolve(parentValue, { id }) {
+                return axios
+                    .delete(`http://localhost:3000/users/${id}`)
+                    .then((res) => res.data);
+            },
+        },
+        editUser: {
+            type: UserType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLString) },
+                firstName: { type: GraphQLString },
+                age: { type: GraphQLInt },
+                companyId: { type: GraphQLString },
+            },
+            resolve(parentValue, args) {
+                return axios
+                    .patch(`http://localhost:3000/users/${id}`, args)
+                    .then((res) => res.data);
+            },
+        },
+    },
+});
+
+module.exports = new GraphQLSchema({
+    query: RootQuery,
+    mutation,
+});
+```
+
+-   GraphQLNonNull makes the item required to create a new entry
+-   Be sure to tell the export that you are using a mutation type
+
+-   Mutations are called as below:
+
+```javascript
+mutation{
+    addUser(firstName: "Stephen", age: 26){
+        id
+        firstName
+        age
+    }
+}
+
+mutation{
+    deleteUser(id: "sMxrg7I"){
+    id
+  }
+}
+
+mutation{
+    editUser(id: "23", age: 34){
+    id
+    firstName
+    age
+  }
+}
+```
