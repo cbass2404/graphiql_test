@@ -210,3 +210,28 @@ const UserType = new GraphQLObjectType({
 -   Resolve is only required on issues that have different names between the data model and the data type trying to be used
 -   ParentValue looks into the value of the parent
     -   console.log(parentValue) is a good way to see what it is you need to use
+
+9. Resolving circular references in graphql:
+
+```javascript
+const CompanyType = new GraphQLObjectType({
+    name: "Company",
+    fields: () => ({
+        id: { type: GraphQLString },
+        name: { type: GraphQLString },
+        description: { type: GraphQLString },
+        users: {
+            type: new GraphQLList(UserType),
+            resolve(parentValue, args) {
+                return axios
+                    .get(
+                        `http://localhost:3000/companies/${parentValue.id}/users`
+                    )
+                    .then((res) => res.data);
+            },
+        },
+    }),
+});
+```
+
+-   wrap the references fields section in an arrow function as above
